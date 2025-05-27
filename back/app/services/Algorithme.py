@@ -1,123 +1,104 @@
-import pandas as pd
-from itertools import combinations
-import random
+from pulp import LpProblem, LpVariable, lpSum, LpMaximize, LpBinary, value
 
-# === Données des étudiants ===
-students = {
-    "Alice": {"average": 14.5, "intern": 0, "preferences": ["Bob", "Charlie"]},
-    "Bob": {"average": 13.0, "intern": 1, "preferences": ["Alice"]},
-    "Charlie": {"average": 15.2, "intern": 0, "preferences": ["Eve"]},
-    "David": {"average": 8.8, "intern": 1, "preferences": []},
-    "Eve": {"average": 14.7, "intern": 0, "preferences": ["Charlie"]},
-    "Fay": {"average": 11.3, "intern": 1, "preferences": ["Charlie"]},
-    "Gus": {"average": 9.9, "intern": 0, "preferences": []},
-    "Hugo": {"average": 14.1, "intern": 0, "preferences": ["Eve"]},
-    "Ivy": {"average": 10.9, "intern": 1, "preferences": ["Fay"]},
-    "Jack": {"average": 10.0, "intern": 0, "preferences": ["Alice", "Eve"]},
-    "Kim": {"average": 9.5, "intern": 1, "preferences": ["Bob", "Charlie"]},
-    "Leo": {"average": 13.8, "intern": 0, "preferences": ["Hugo"]},
-    "Mia": {"average": 15.0, "intern": 0, "preferences": ["Alice"]},
-    "Nina": {"average": 12.7, "intern": 1, "preferences": ["Fay"]},
-    "Oscar": {"average": 13.5, "intern": 1, "preferences": ["Nina", "Kim"]},
+students = [
+    {"name": "Alice", "mean": 15.2, "alt": False},
+    {"name": "Bob", "mean": 11.5, "alt": True},
+    {"name": "Charlie", "mean": 8.9, "alt": False},
+    {"name": "Diana", "mean": 13.0, "alt": True},
+    {"name": "Eli", "mean": 16.5, "alt": False},
+    {"name": "Fanny", "mean": 9.8, "alt": True},
+    {"name": "Gaspard", "mean": 14.1, "alt": False},
+    {"name": "Hugo", "mean": 10.5, "alt": True},
+    {"name": "Isabelle", "mean": 12.3, "alt": False},
+    {"name": "Jade", "mean": 17.8, "alt": True},
+    {"name": "Kamel", "mean": 9.4, "alt": False},
+    {"name": "Laura", "mean": 13.7, "alt": True}
+]
+
+
+# Number of groups (user-defined or provided)
+n = 4
+
+# Preferences collected from student form (max m per student)
+preferences = {
+    "Alice": ["Bob", "Jade"],
+    "Bob": ["Diana", "Fanny", "Isabelle"],
+    "Charlie": ["Hugo"],
+    "Diana": ["Laura", "Fanny"],
+    "Eli": ["Jade", "Alice", "Gaspard", "Isabelle"],
+    "Fanny": ["Charlie", "Diana"],
+    "Gaspard": ["Laura", "Hugo", "Alice"],
+    "Hugo": ["Kamel", "Isabelle", "Fanny"],
+    "Isabelle": [],
+    "Jade": ["Eli", "Alice"],
+    "Kamel": ["Hugo", "Charlie"],
+    "Laura": ["Gaspard", "Diana", "Fanny"]
 }
 
-names = list(students.keys())
-n = len(names)
 
-# === Déterminer la taille des groupes ===
-for group_size in [5, 4, 3]:
-    if n % group_size == 0:
-        break
-else:
-    raise ValueError("Impossible de diviser les étudiants en groupes égaux.")
+student_names = [s["name"] for s in students]
+student_info = {s["name"]: s for s in students}
+total_students = len(students)
 
-# === Attribuer un niveau académique
-def get_level(avg):
-    if avg < 10:
-        return "Low"
-    elif avg < 13:
-        return "Medium"
+# Check feasibility
+if total_students % n != 0:
+    raise ValueError("Total students must be divisible by the number of groups.")
+
+group_size = total_students // n
+
+# Assign level
+for s in students:
+    if s["mean"] < 10:
+        s["level"] = "low"
+    elif s["mean"] < 14:
+        s["level"] = "medium"
     else:
-        return "High"
+        s["level"] = "high"
 
-# === Calcul du score (préférence + mixité alternant)
-alpha = 2  # préférence
+# Define LP variables
+x = LpVariable.dicts("x", ((i, g) for i in student_names for g in range(n)), cat=LpBinary)
+z = LpVariable.dicts("z", ((i, j, g) for i in student_names for j in preferences.get(i, []) for g in range(n)), cat=LpBinary)
 
-def compute_score(a, b):
-    score = 0
-    if b in students[a]["preferences"]:
-        score += alpha
-    if students[a]["intern"] != students[b]["intern"]:
-        score += 1  # favorise les binômes mixtes
-    return score
+# Build problem
+prob = LpProblem("GroupAssignmentWithPreferences", LpMaximize)
 
-# === Générer les paires triées
-pairs = []
-for a, b in combinations(names, 2):
-    total = compute_score(a, b) + compute_score(b, a)
-    pairs.append(((a, b), total))
-pairs.sort(key=lambda x: -x[1])
+# Objective: maximize satisfied preferences and balanced levels
+prob += (
+    3 * lpSum(z[i, j, g] for i in student_names for j in preferences.get(i, []) for g in range(n)) +
+    1 * lpSum(x[i, g] for i in student_names for g in range(n) if student_info[i]["level"] == "low") +
+    1 * lpSum(x[i, g] for i in student_names for g in range(n) if student_info[i]["level"] == "medium") +
+    1 * lpSum(x[i, g] for i in student_names for g in range(n) if student_info[i]["level"] == "high")
+)
 
-# === Création des groupes
-assigned = set()
-groups = []
-levels = {name: get_level(data["average"]) for name, data in students.items()}
-interns = [name for name in names if students[name]["intern"] == 1]
-random.shuffle(interns)
+# Constraints
+# One group per student
+for i in student_names:
+    prob += lpSum(x[i, g] for g in range(n)) == 1
 
-while len(assigned) < n:
-    group = []
+# Fixed group size
+for g in range(n):
+    prob += lpSum(x[i, g] for i in student_names) == group_size
 
-    # Ajouter au moins un alternant
-    for intern in interns:
-        if intern not in assigned:
-            group.append(intern)
-            assigned.add(intern)
-            break
+# Define z[i,j,g] = 1 if i and j are in the same group
+for i in student_names:
+    for j in preferences.get(i, []):
+        for g in range(n):
+            prob += z[i, j, g] <= x[i, g]
+            prob += z[i, j, g] <= x[j, g]
+            prob += z[i, j, g] >= x[i, g] + x[j, g] - 1
 
-    # Ajouter un étudiant de chaque niveau manquant
-    needed_levels = {"Low", "Medium", "High"} - {levels[stu] for stu in group}
-    for level in needed_levels:
-        for name in names:
-            if name not in assigned and levels[name] == level:
-                group.append(name)
-                assigned.add(name)
-                break
+# Solve
+prob.solve()
 
-    # Compléter le groupe
-    for name in names:
-        if name not in assigned:
-            group.append(name)
-            assigned.add(name)
-            if len(group) == group_size:
-                break
-
-    groups.append(group)
-
-# === Calcul des scores de satisfaction
-student_scores = {}
-student_groups = {}
-max_score = (group_size - 1) * (alpha * 2 + 1)  # 2 préférences mutuelles + 1 mixité
-
-for group in groups:
-    for student in group:
-        score = sum(compute_score(student, other) + compute_score(other, student)
-                    for other in group if other != student)
-        percent = round((score / max_score) * 100, 2)
-        student_scores[student] = percent
-        student_groups[student] = group
-
-# === Affichage final
-df = pd.DataFrame([
-    {
-        "Student": student,
-        "Group Members": sorted(student_groups[student]),
-        "Level": levels[student],
-        "Intern": students[student]["intern"],
-        "Average": students[student]["average"],
-        "Satisfaction (%)": student_scores[student]
-    }
-    for student in sorted(names)
-])
-
-print(df.to_string(index=False))
+# Show result
+if prob.status == 1:
+    print(f"\n✅ Successful distribution into {n} groups of {group_size} students each:\n")
+    for g in range(n):
+        print(f"🧩 Group {g+1}:")
+        for i in student_names:
+            if value(x[i, g]) == 1:
+                s = student_info[i]
+                print(f" - {i} (mean={s['mean']}, level={s['level']}, alternant={s['alt']})")
+        print()
+else:
+    print("\n❌ No feasible solution found.")
