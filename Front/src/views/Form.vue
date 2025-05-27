@@ -20,6 +20,7 @@
         </div>
 
         <button type="submit">Submit</button>
+        <button type="button" @click="goBack" class="back-button">Back</button>
       </form>
     </div>
   </div>
@@ -48,6 +49,9 @@ export default {
       const selectedNames = this.fields.map(f => f.name);
       const internStatus = this.isIntern;
       console.log("Submitted:", selectedNames, "Intern:", internStatus);
+    },
+    goBack() {
+      this.$router.back();
     },
   },
 };
@@ -115,5 +119,14 @@ button:hover {
   gap: 10px;
   justify-content: center;
   font-size: 16px;
+}
+
+.back-button {
+  margin-top: 20px;
+  background-color: #999;
+}
+
+.back-button:hover {
+  background-color: #777;
 }
 </style>
