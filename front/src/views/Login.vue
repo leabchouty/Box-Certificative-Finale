@@ -1,27 +1,20 @@
 <template>
   <div class="login-wrapper">
-    <div class="login-panel">
-      <div class="login-left">
-        <h1>Welcome Back</h1>
-        <p>Please enter your credentials to access your account.</p>
-        <form @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label for="username">Email</label>
-            <input type="text" id="username" v-model="username" placeholder="Enter your email" />
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" v-model="password" placeholder="Enter your password" />
-          </div>
-          <button type="submit">Login</button>
-        </form>
+    <div class="login-box">
+      <h1>Se connecter à l'application</h1>
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label for="username">Email</label>
+          <input type="text" id="username" v-model="username" placeholder="Entrez votre email" />
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" v-model="password" placeholder="Entrez votre mot de passe" />
+        </div>
+        <button type="submit">Connexion</button>
         <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
         <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
-      </div>
-      <div class="login-right">
-        <h2>Clustering Camarade App</h2>
-        <p>Group optimization and affinity-based student matching. Smart. Simple. Efficient.</p>
-      </div>
+      </form>
     </div>
   </div>
 </template>
@@ -49,7 +42,8 @@ export default {
           password: this.password,
         });
         if (error) throw error;
-        this.loginSuccessMessage = 'Login successful! Welcome.';
+        this.loginSuccessMessage = 'Connexion réussie. Redirection...';
+        setTimeout(() => this.$router.push('/HomeStudent'), 1000);
       } catch (error) {
         this.loginErrorMessage = error.message;
       }
@@ -62,61 +56,45 @@ export default {
 .login-wrapper {
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(to right, #ece9e6, #ffffff);
+  background: linear-gradient(to right, #e3f2fd, #e0f7fa);
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: center;
 }
 
-.login-panel {
-  display: flex;
-  width: 90%;
-  max-width: 1200px;
-  height: 80vh;
+.login-box {
   background: white;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-radius: 16px;
-  overflow: hidden;
+  padding: 60px 80px;
+  width: 100%;
+  max-width: 800px;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
-.login-left,
-.login-right {
-  width: 50%;
-  padding: 60px;
-}
-
-.login-left {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.login-left h1 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  color: #222;
-}
-
-.login-left p {
-  margin-bottom: 30px;
-  color: #555;
+h1 {
+  margin-bottom: 40px;
+  font-size: 28px;
+  color: #333;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  text-align: left;
 }
 
 label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
+  font-size: 15px;
 }
 
 input {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   font-size: 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #ccc;
 }
 
@@ -126,15 +104,16 @@ input:focus {
 }
 
 button {
-  padding: 14px;
+  margin-top: 10px;
   width: 100%;
+  padding: 16px;
+  font-size: 17px;
   background-color: #42b983;
   color: white;
-  font-size: 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-weight: bold;
   cursor: pointer;
-  margin-top: 10px;
 }
 
 button:hover {
@@ -142,31 +121,12 @@ button:hover {
 }
 
 .success-message {
+  margin-top: 20px;
   color: green;
-  margin-top: 15px;
 }
 
 .error-message {
+  margin-top: 20px;
   color: red;
-  margin-top: 15px;
-}
-
-.login-right {
-  background: #42b983;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-
-.login-right h2 {
-  font-size: 28px;
-  margin-bottom: 20px;
-}
-
-.login-right p {
-  font-size: 16px;
-  padding: 0 20px;
 }
 </style>
