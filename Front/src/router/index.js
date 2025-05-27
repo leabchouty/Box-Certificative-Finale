@@ -5,7 +5,8 @@ import HomeTeacher from '../views/HomeTeacher.vue';
 import FormView from '../views/Form.vue';
 import FormConfig from '../views/FormConfig.vue';
 import ResultsView from '../views/Results.vue';
-import ResultsStudentsView from '../views/ResultsStudents.vue';
+
+import GenerateResults from '../views/GenerateResults.vue';
 
 const routes = [
   {
@@ -31,6 +32,7 @@ const routes = [
     path: '/form-config',
     name: 'FormConfig',
     component: FormConfig,
+    meta: { requiresAuth: true }
   },
   {
     path: '/form',
@@ -43,9 +45,10 @@ const routes = [
     component: ResultsView,
   },
   {
-    path:'/resultsstudents',
-    name: 'ResultsStudents',
-    component: ResultsStudentsView,
+    path: '/generate-results',
+    name: 'GenerateResults',
+    component: GenerateResults,
+    meta: { requiresAuth: true }
   }
 ];
 

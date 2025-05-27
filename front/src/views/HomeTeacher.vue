@@ -36,6 +36,7 @@
 
 <script>
 import { supabase } from '../supabase';
+import router from '../router';
 
 export default {
   name: 'HomeTeacher',
@@ -46,18 +47,26 @@ export default {
     },
     navigateToResults() {
       // Navigate to the results page
-      this.$router.push('/results');
+      this.$router.push('/generate-results');
     },
     async logout() {
       try {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
-        
-        // Redirect to login page after logout
-        this.$router.push('/login');
+        router.push('/');
       } catch (error) {
         console.error('Error logging out:', error.message);
       }
+    }
+  },
+  async mounted() {
+    // Check if user is logged in, redirect if not
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/');
+    } else {
+      // Potentially load some initial dashboard data here
+      console.log('Teacher user authenticated:', user.email);
     }
   }
 };
