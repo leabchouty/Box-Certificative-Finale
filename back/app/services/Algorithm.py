@@ -21,18 +21,18 @@ n = 4
 
 # Preferences collected from student form (max m per student)
 preferences = {
-    "Alice": ["Bob", "Jade"],
-    "Bob": ["Diana", "Fanny", "Isabelle"],
-    "Charlie": ["Hugo"],
-    "Diana": ["Laura", "Fanny"],
-    "Eli": ["Jade", "Alice", "Gaspard", "Isabelle"],
-    "Fanny": ["Charlie", "Diana"],
-    "Gaspard": ["Laura", "Hugo", "Alice"],
-    "Hugo": ["Kamel", "Isabelle", "Fanny"],
-    "Isabelle": ["Bob"],
-    "Jade": ["Eli", "Alice"],
-    "Kamel": ["Hugo", "Charlie"],
-    "Laura": ["Gaspard", "Diana", "Fanny"]
+    "Alice": ["Bob", "Jade","Diana", "Fanny", "Isabelle"],
+    "Bob": ["Diana", "Fanny", "Isabelle","Alice", "Gaspard"],
+    "Charlie": ["Hugo","Fanny",,"Kamel", "Isabelle", "Gaspard"],
+    "Diana": ["Laura", "Fanny","Jade", "Alice", "Gaspard"],
+    "Eli": ["Jade", "Alice", "Gaspard", "Isabelle","Diana"],
+    "Fanny": ["Charlie", "Gaspard","Diana","Hugo","Jade"],
+    "Gaspard": ["Laura", "Hugo", "Alice","Eli", "Isabelle"],
+    "Hugo": ["Kamel", "Isabelle", "Fanny","Bob", "Jade"],
+    "Isabelle": ["Bob","Kamel", "Jade","Diana" "Fanny"],
+    "Jade": ["Eli", "Alice","Hugo","Diana","Charlie"],
+    "Kamel": ["Hugo", "Charlie", "Diana", "Fanny","Isabelle"],
+    "Laura": ["Gaspard", "Diana", "Fanny","Isabelle","Eli"]
 }
 
 
