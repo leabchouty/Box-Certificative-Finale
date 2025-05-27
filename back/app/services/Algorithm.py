@@ -29,7 +29,7 @@ preferences = {
     "Fanny": ["Charlie", "Diana"],
     "Gaspard": ["Laura", "Hugo", "Alice"],
     "Hugo": ["Kamel", "Isabelle", "Fanny"],
-    "Isabelle": [],
+    "Isabelle": ["Bob"],
     "Jade": ["Eli", "Alice"],
     "Kamel": ["Hugo", "Charlie"],
     "Laura": ["Gaspard", "Diana", "Fanny"]
@@ -87,10 +87,23 @@ for i in student_names:
             prob += z[i, j, g] <= x[j, g]
             prob += z[i, j, g] >= x[i, g] + x[j, g] - 1
 
-# Solve
+# After solving
 prob.solve()
 
-# Show result
+# Score de satisfiabilité
+total_preferences = 0
+satisfied_preferences = 0
+
+for i in student_names:
+    prefs = preferences.get(i, [])
+    for j in prefs:
+        total_preferences += 1
+        for g in range(n):
+            if value(x[i, g]) == 1 and value(x[j, g]) == 1:
+                satisfied_preferences += 1
+                break  # Une fois suffisant si i et j sont dans le même groupe
+
+# Affichage résultat
 if prob.status == 1:
     print(f"\n✅ Successful distribution into {n} groups of {group_size} students each:\n")
     for g in range(n):
@@ -100,5 +113,12 @@ if prob.status == 1:
                 s = student_info[i]
                 print(f" - {i} (mean={s['mean']}, level={s['level']}, alternant={s['alt']})")
         print()
+
+    # Affichage du score
+    if total_preferences > 0:
+        score = (satisfied_preferences / total_preferences) * 100
+        print(f"📊 Satisfaction score: {satisfied_preferences}/{total_preferences} preferences respected ({score:.1f}%)")
+    else:
+        print("📊 Satisfaction score: No preferences provided.")
 else:
     print("\n❌ No feasible solution found.")
