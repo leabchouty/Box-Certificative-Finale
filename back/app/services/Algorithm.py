@@ -12,39 +12,40 @@ students = [
     {"name": "Isabelle", "mean": 12.3, "alt": False},
     {"name": "Jade", "mean": 17.8, "alt": True},
     {"name": "Kamel", "mean": 9.4, "alt": False},
-    {"name": "Laura", "mean": 13.7, "alt": True}
+    {"name": "Laura", "mean": 13.7, "alt": True},
+    {"name": "Marc", "mean": 11.2, "alt": False},
 ]
 
+# Approximate group size
+n = 3
 
-# Number of groups (user-defined or provided)
-n = 4
-
-# Preferences collected from student form (max m per student)
+# Preferences
 preferences = {
-    "Alice": ["Bob", "Jade"],
-    "Bob": ["Diana", "Fanny", "Isabelle"],
-    "Charlie": ["Hugo"],
-    "Diana": ["Laura", "Fanny"],
-    "Eli": ["Jade", "Alice", "Gaspard", "Isabelle"],
-    "Fanny": ["Charlie", "Diana"],
-    "Gaspard": ["Laura", "Hugo", "Alice"],
-    "Hugo": ["Kamel", "Isabelle", "Fanny"],
-    "Isabelle": ["Bob"],
-    "Jade": ["Eli", "Alice"],
-    "Kamel": ["Hugo", "Charlie"],
-    "Laura": ["Gaspard", "Diana", "Fanny"]
+    "Alice": ["Bob", "Jade", "Diana", "Fanny", "Isabelle"],
+    "Bob": ["Diana", "Fanny", "Isabelle", "Alice", "Gaspard"],
+    "Charlie": ["Hugo", "Fanny", "Kamel", "Isabelle", "Gaspard"],
+    "Diana": ["Laura", "Fanny", "Jade", "Alice", "Gaspard"],
+    "Eli": ["Jade", "Alice", "Gaspard", "Isabelle", "Diana"],
+    "Fanny": ["Charlie", "Gaspard", "Diana", "Hugo", "Jade"],
+    "Gaspard": ["Laura", "Hugo", "Alice", "Eli", "Isabelle"],
+    "Hugo": ["Kamel", "Isabelle", "Fanny", "Bob", "Jade"],
+    "Isabelle": ["Bob", "Kamel", "Jade", "Diana", "Fanny"],
+    "Jade": ["Eli", "Alice", "Hugo", "Diana", "Charlie"],
+    "Kamel": ["Hugo", "Charlie", "Diana", "Fanny", "Isabelle"],
+    "Laura": ["Gaspard", "Diana", "Fanny", "Isabelle", "Eli"],
+    "Marc": ["Jade", "Fanny", "Bob", "Diana", "Charlie"],
 }
-
 
 student_names = [s["name"] for s in students]
 student_info = {s["name"]: s for s in students}
 total_students = len(students)
 
-# Check feasibility
-if total_students % n != 0:
-    raise ValueError("Total students must be divisible by the number of groups.")
+# Calculate number of groups
+num_groups = total_students // n
+remainder = total_students % n
 
-group_size = total_students // n
+if num_groups == 0:
+    raise ValueError("Pas assez d'étudiants pour former au moins un groupe.")
 
 # Assign level
 for s in students:
@@ -55,72 +56,72 @@ for s in students:
     else:
         s["level"] = "high"
 
-# Define LP variables
-x = LpVariable.dicts("x", ((i, g) for i in student_names for g in range(n)), cat=LpBinary)
-z = LpVariable.dicts("z", ((i, j, g) for i in student_names for j in preferences.get(i, []) for g in range(n)), cat=LpBinary)
-
-# Build problem
-prob = LpProblem("GroupAssignmentWithPreferences", LpMaximize)
-
-# Objective: maximize satisfied preferences and balanced levels
-prob += (
-    3 * lpSum(z[i, j, g] for i in student_names for j in preferences.get(i, []) for g in range(n)) +
-    1 * lpSum(x[i, g] for i in student_names for g in range(n) if student_info[i]["level"] == "low") +
-    1 * lpSum(x[i, g] for i in student_names for g in range(n) if student_info[i]["level"] == "medium") +
-    1 * lpSum(x[i, g] for i in student_names for g in range(n) if student_info[i]["level"] == "high")
+# Variables
+x = LpVariable.dicts("x", ((i, g) for i in student_names for g in range(num_groups)), cat=LpBinary)
+z = LpVariable.dicts(
+    "z",
+    ((i, j, g) for i in student_names for j in preferences.get(i, []) for g in range(num_groups)),
+    cat=LpBinary,
 )
 
-# Constraints
-# One group per student
+# Problem
+prob = LpProblem("GroupAssignmentWithPreferences", LpMaximize)
+
+# Objective
+prob += (
+    5 * lpSum(z[i, j, g] for i in student_names for j in preferences.get(i, []) for g in range(num_groups))
+    + lpSum(x[i, g] for i in student_names for g in range(num_groups) if student_info[i]["level"] == "low")
+    + lpSum(x[i, g] for i in student_names for g in range(num_groups) if student_info[i]["level"] == "medium")
+    + lpSum(x[i, g] for i in student_names for g in range(num_groups) if student_info[i]["level"] == "high")
+)
+
+# Each student assigned to exactly one group
 for i in student_names:
-    prob += lpSum(x[i, g] for g in range(n)) == 1
+    prob += lpSum(x[i, g] for g in range(num_groups)) == 1
 
+# Group size: some groups with n+1 students
+for g in range(num_groups):
+    if g < remainder:
+        prob += lpSum(x[i, g] for i in student_names) == n + 1
+    else:
+        prob += lpSum(x[i, g] for i in student_names) == n
 
-##
-# Fixed group size
-for g in range(n):
-    prob += lpSum(x[i, g] for i in student_names) == group_size
-
-# Define z[i,j,g] = 1 if i and j are in the same group
+# Preference satisfaction
 for i in student_names:
     for j in preferences.get(i, []):
-        for g in range(n):
+        for g in range(num_groups):
             prob += z[i, j, g] <= x[i, g]
             prob += z[i, j, g] <= x[j, g]
             prob += z[i, j, g] >= x[i, g] + x[j, g] - 1
 
-# After solving
+# Solve
 prob.solve()
 
-# Score de satisfiabilité
-total_preferences = 0
-satisfied_preferences = 0
+# Evaluation
+total_possible = sum(len(preferences.get(i, [])) for i in student_names)
+total_matched = 0
 
 for i in student_names:
-    prefs = preferences.get(i, [])
-    for j in prefs:
-        total_preferences += 1
-        for g in range(n):
+    for j in preferences.get(i, []):
+        for g in range(num_groups):
             if value(x[i, g]) == 1 and value(x[j, g]) == 1:
-                satisfied_preferences += 1
-                break  # Une fois suffisant si i et j sont dans le même groupe
+                total_matched += 1
+                break
 
-# Affichage résultat
+# Output
 if prob.status == 1:
-    print(f"\n✅ Successful distribution into {n} groups of {group_size} students each:\n")
-    for g in range(n):
-        print(f"🧩 Group {g+1}:")
+    print(f"\n✅ Répartition en {num_groups} groupes (taille approx. {n}) réussie :\n")
+    for g in range(num_groups):
+        print(f"🧩 Groupe {g+1}:")
         for i in student_names:
             if value(x[i, g]) == 1:
                 s = student_info[i]
                 print(f" - {i} (mean={s['mean']}, level={s['level']}, alternant={s['alt']})")
         print()
-
-    # Affichage du score
-    if total_preferences > 0:
-        score = (satisfied_preferences / total_preferences) * 100
-        print(f"📊 Satisfaction score: {satisfied_preferences}/{total_preferences} preferences respected ({score:.1f}%)")
+    if total_possible > 0:
+        score_pct = (total_matched / total_possible) * 100
+        print(f"📊 Score de satisfaction : {total_matched}/{total_possible} préférences respectées ({score_pct:.1f}%)")
     else:
-        print("📊 Satisfaction score: No preferences provided.")
+        print("📊 Score de satisfaction : aucune préférence exprimée.")
 else:
-    print("\n❌ No feasible solution found.")
+    print("\n❌ Aucune solution réalisable trouvée.")
