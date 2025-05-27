@@ -210,14 +210,22 @@ export default {
     },
 
     async loadStudentResponseCount() {
-      if (!this.existingConfig) return;
+      if (!this.existingConfig) {
+        console.log('loadStudentResponseCount: No existingConfig, cannot load count.');
+        return;
+      }
       
+      console.log('loadStudentResponseCount: existingConfig:', JSON.parse(JSON.stringify(this.existingConfig)));
+      console.log('loadStudentResponseCount: Querying with form_config_id:', this.existingConfig.id);
+
       try {
-        // Assuming you have a student_responses table
+        // Count students who have submitted the form (form_submitted = true)
         const { count, error } = await supabase
-          .from('student')
-          .select('id', { count: 'form_submitted' })
-          .eq('form_config_id', this.existingConfig.id);
+          .from('students')
+          .select('id', { count: 'exact' })
+          .eq('form_submitted', true);
+
+        console.log('loadStudentResponseCount: Supabase response - count:', count, 'error:', error);
 
         if (error) throw error;
         this.studentResponseCount = count || 0;
