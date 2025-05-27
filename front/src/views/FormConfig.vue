@@ -26,20 +26,6 @@
           <small>How many preferences can each student select? (1-10)</small>
         </div>
 
-        <div class="form-group">
-          <label for="groupSize">Group Size (n):</label>
-          <input 
-            type="number" 
-            id="groupSize" 
-            v-model.number="formConfig.n" 
-            min="2" 
-            max="20"
-            required
-            :disabled="isSaving"
-          >
-          <small>How many members should be in each group? (2-20)</small>
-        </div>
-
         <div class="form-group publish-toggle-group">
           <label for="isPublishedCheckbox">Form Status:</label>
           <div class="toggle-container">
@@ -143,7 +129,6 @@ export default {
     return {
       formConfig: {
         m: 3,
-        n: 4,
         closureDateTime: '',
         isPublished: false,
       },
@@ -166,7 +151,6 @@ export default {
       
       return (
         this.formConfig.m !== this.originalConfig.m ||
-        this.formConfig.n !== this.originalConfig.n ||
         this.formConfig.closureDateTime !== this.originalConfig.closureDateTime ||
         this.formConfig.isPublished !== this.originalConfig.isPublished
       );
@@ -188,14 +172,17 @@ export default {
           this.existingConfig = configs[0];
           this.formConfig = {
             m: this.existingConfig.m,
-            n: this.existingConfig.n,
             closureDateTime: this.existingConfig.date ? 
               new Date(this.existingConfig.date).toISOString().slice(0, 16) : '',
             isPublished: this.existingConfig.isopen,
           };
           
           // Store original config for change detection
-          this.originalConfig = { ...this.formConfig };
+          this.originalConfig = { 
+            m: this.formConfig.m,
+            closureDateTime: this.formConfig.closureDateTime,
+            isPublished: this.formConfig.isPublished
+          };
           
           // Load student response count if form exists
           await this.loadStudentResponseCount();
@@ -265,7 +252,6 @@ export default {
       try {
         const configData = {
           m: this.formConfig.m,
-          n: this.formConfig.n,
           date: this.formConfig.closureDateTime || null,
           isopen: this.formConfig.isPublished,
         };
@@ -327,8 +313,7 @@ export default {
     hasSignificantChanges() {
       if (!this.originalConfig) return false;
       return (
-        this.formConfig.m !== this.originalConfig.m ||
-        this.formConfig.n !== this.originalConfig.n
+        this.formConfig.m !== this.originalConfig.m
       );
     },
 
