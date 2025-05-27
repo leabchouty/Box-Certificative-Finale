@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/Login.vue';
 import HomeStudentView from '../views/HomeStudent.vue';
+import HomeTeacher from '../views/HomeTeacher.vue';
 import FormView from '../views/Form.vue';
+import FormConfig from '../views/FormConfig.vue';
+import ResultsView from '../views/Results.vue';
 
 const routes = [
   {
@@ -19,9 +22,24 @@ const routes = [
     component: HomeStudentView,
   },
   {
-    path: '/Form',
-    name: 'Form',
+    path: '/homeTeacher',
+    name: 'HomeTeacher',
+    component: HomeTeacher,
+  },
+  {
+    path: '/form-config',
+    name: 'FormConfig',
+    component: FormConfig,
+  },
+  {
+    path: '/form',
+    name: 'StudentForm',
     component: FormView,
+  },
+  {
+    path: '/results',
+    name: 'Results',
+    component: ResultsView,
   }
 ];
 
