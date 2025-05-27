@@ -1,20 +1,27 @@
 <template>
-  <div class="login-container">
-    <div class="login-box">
-      <h1>Sign In</h1>
-      <form @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="username">Email</label>
-          <input type="text" id="username" v-model="username" placeholder="Enter your email" />
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" v-model="password" placeholder="Enter your password" />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-      <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
-      <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
+  <div class="login-wrapper">
+    <div class="login-panel">
+      <div class="login-left">
+        <h1>Welcome Back</h1>
+        <p>Please enter your credentials to access your account.</p>
+        <form @submit.prevent="handleLogin">
+          <div class="form-group">
+            <label for="username">Email</label>
+            <input type="text" id="username" v-model="username" placeholder="Enter your email" />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" v-model="password" placeholder="Enter your password" />
+          </div>
+          <button type="submit">Login</button>
+        </form>
+        <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
+        <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
+      </div>
+      <div class="login-right">
+        <h2>Clustering Camarade App</h2>
+        <p>Group optimization and affinity-based student matching. Smart. Simple. Efficient.</p>
+      </div>
     </div>
   </div>
 </template>
@@ -42,11 +49,8 @@ export default {
           password: this.password,
         });
         if (error) throw error;
-        console.log('User logged in:', data.user);
         this.loginSuccessMessage = 'Login successful! Welcome.';
-        // this.$router.push('/dashboard');
       } catch (error) {
-        console.error('Error logging in:', error.message);
         this.loginErrorMessage = error.message;
       }
     },
@@ -55,51 +59,65 @@ export default {
 </script>
 
 <style scoped>
-.login-container {
+.login-wrapper {
   height: 100vh;
+  width: 100vw;
+  background: linear-gradient(to right, #ece9e6, #ffffff);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.login-box {
-  background-color: #ffffffdd;
-  padding: 40px 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  animation: fadeIn 0.6s ease-in-out;
+.login-panel {
+  display: flex;
+  width: 90%;
+  max-width: 1200px;
+  height: 80vh;
+  background: white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.login-box h1 {
-  margin-bottom: 25px;
-  font-size: 24px;
-  color: #333;
+.login-left,
+.login-right {
+  width: 50%;
+  padding: 60px;
+}
+
+.login-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-left h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+.login-left p {
+  margin-bottom: 30px;
+  color: #555;
 }
 
 .form-group {
   margin-bottom: 20px;
-  text-align: left;
 }
 
 label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 600;
-  color: #444;
 }
 
 input {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border 0.3s;
 }
 
 input:focus {
@@ -108,16 +126,15 @@ input:focus {
 }
 
 button {
+  padding: 14px;
   width: 100%;
-  padding: 12px;
   background-color: #42b983;
-  border: none;
-  border-radius: 6px;
   color: white;
   font-size: 16px;
-  font-weight: bold;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  margin-top: 10px;
 }
 
 button:hover {
@@ -134,8 +151,22 @@ button:hover {
   margin-top: 15px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.login-right {
+  background: #42b983;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.login-right h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.login-right p {
+  font-size: 16px;
+  padding: 0 20px;
 }
 </style>
