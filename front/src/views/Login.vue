@@ -1,20 +1,20 @@
 <template>
-  <div class="login-container">
+  <div class="login-wrapper">
     <div class="login-box">
-      <h1>Sign In</h1>
+      <h1>Se connecter à l'application</h1>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="username">Email</label>
-          <input type="text" id="username" v-model="username" placeholder="Enter your email" />
+          <input type="text" id="username" v-model="username" placeholder="Entrez votre email" />
         </div>
         <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" v-model="password" placeholder="Enter your password" />
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" v-model="password" placeholder="Entrez votre mot de passe" />
         </div>
-        <button type="submit">Login</button>
+        <button type="submit">Connexion</button>
+        <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
+        <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
       </form>
-      <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
-      <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
     </div>
   </div>
 </template>
@@ -42,11 +42,9 @@ export default {
           password: this.password,
         });
         if (error) throw error;
-        console.log('User logged in:', data.user);
-        this.loginSuccessMessage = 'Login successful! Welcome.';
-        // this.$router.push('/dashboard');
+        this.loginSuccessMessage = 'Connexion réussie. Redirection...';
+        setTimeout(() => this.$router.push('/HomeStudent'), 1000);
       } catch (error) {
-        console.error('Error logging in:', error.message);
         this.loginErrorMessage = error.message;
       }
     },
@@ -55,51 +53,49 @@ export default {
 </script>
 
 <style scoped>
-.login-container {
+.login-wrapper {
   height: 100vh;
+  width: 100vw;
+  background: linear-gradient(to right, #e3f2fd, #e0f7fa);
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  align-items: center;
 }
 
 .login-box {
-  background-color: #ffffffdd;
-  padding: 40px 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  background: white;
+  padding: 60px 80px;
   width: 100%;
-  max-width: 400px;
+  max-width: 800px;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
   text-align: center;
-  animation: fadeIn 0.6s ease-in-out;
 }
 
-.login-box h1 {
-  margin-bottom: 25px;
-  font-size: 24px;
+h1 {
+  margin-bottom: 40px;
+  font-size: 28px;
   color: #333;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   text-align: left;
 }
 
 label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 600;
-  color: #444;
+  font-size: 15px;
 }
 
 input {
   width: 100%;
-  padding: 12px;
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 10px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border 0.3s;
 }
 
 input:focus {
@@ -108,16 +104,16 @@ input:focus {
 }
 
 button {
+  margin-top: 10px;
   width: 100%;
-  padding: 12px;
+  padding: 16px;
+  font-size: 17px;
   background-color: #42b983;
-  border: none;
-  border-radius: 6px;
   color: white;
-  font-size: 16px;
+  border: none;
+  border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 button:hover {
@@ -125,17 +121,12 @@ button:hover {
 }
 
 .success-message {
+  margin-top: 20px;
   color: green;
-  margin-top: 15px;
 }
 
 .error-message {
+  margin-top: 20px;
   color: red;
-  margin-top: 15px;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 </style>
