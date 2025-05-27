@@ -90,7 +90,7 @@
       </div>
 
       <router-link :to="userRole === 'teacher' ? '/homeTeacher' : '/homeStudent'" class="back-link">
-        Back to Dashboard
+        Back 
       </router-link>
     </div>
   </div>
