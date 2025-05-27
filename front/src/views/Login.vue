@@ -11,7 +11,7 @@
           <label for="password">Mot de passe</label>
           <input type="password" id="password" v-model="password" placeholder="Entrez votre mot de passe" />
         </div>
-        <button type="submit">Connexion</button>
+        <button type="submit" :disabled="isLoggingIn">Connexion</button>
         <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
         <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
       </form>
@@ -30,22 +30,77 @@ export default {
       password: '',
       loginSuccessMessage: '',
       loginErrorMessage: '',
+      isLoggingIn: false,
     };
   },
   methods: {
     async handleLogin() {
       this.loginSuccessMessage = '';
       this.loginErrorMessage = '';
+      this.isLoggingIn = true;
+
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: this.username,
           password: this.password,
         });
-        if (error) throw error;
-        this.loginSuccessMessage = 'Connexion réussie. Redirection...';
-        setTimeout(() => this.$router.push('/HomeStudent'), 1000);
+
+        if (authError) throw authError;
+
+        if (authData && authData.user) {
+          const userId = authData.user.id;
+          this.loginSuccessMessage = 'Login successful! Checking your role...';
+
+          // Check if user is a professor
+          const { data: professor, error: professorError } = await supabase
+            .from('professors') 
+            .select('id')    // Check against the 'id' column
+            .eq('id', userId) // Use 'id' here
+            .single();
+
+          if (professorError && professorError.code !== 'PGRST116') {
+            throw professorError;
+          }
+
+          if (professor) {
+            this.loginSuccessMessage = 'Professor role confirmed. Redirecting to dashboard...';
+            this.$router.push('/homeTeacher');
+            this.isLoggingIn = false;
+            return;
+          }
+
+          // If not a professor, check if user is a student
+          const { data: student, error: studentError } = await supabase
+            .from('students')   
+            .select('id')    // Check against the 'id' column
+            .eq('id', userId) // Use 'id' here
+            .single();
+          
+          if (studentError && studentError.code !== 'PGRST116') { 
+            throw studentError;
+          }
+
+          if (student) {
+            this.loginSuccessMessage = 'Student role confirmed. Redirecting to dashboard...';
+            this.$router.push('/homeStudent'); // Ensure this route exists
+            this.isLoggingIn = false;
+            return;
+          }
+
+          // If user not found in either table
+          this.loginErrorMessage = 'Your role could not be determined. Please contact an administrator.';
+          await supabase.auth.signOut(); // Log out user as their role is undefined
+          
+        } else {
+          // Should not happen if authError is not thrown, but as a safeguard
+          this.loginErrorMessage = 'Login failed. User data not found.';
+        }
+
       } catch (error) {
-        this.loginErrorMessage = error.message;
+        console.error('Error during login process:', error.message);
+        this.loginErrorMessage = error.message || 'An unexpected error occurred during login.';
+      } finally {
+        this.isLoggingIn = false;
       }
     },
   },
@@ -128,5 +183,10 @@ button:hover {
 .error-message {
   margin-top: 20px;
   color: red;
+}
+
+.login-panel button[type="submit"]:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 </style>
