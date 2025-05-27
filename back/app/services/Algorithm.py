@@ -75,6 +75,8 @@ prob += (
 for i in student_names:
     prob += lpSum(x[i, g] for g in range(n)) == 1
 
+
+##
 # Fixed group size
 for g in range(n):
     prob += lpSum(x[i, g] for i in student_names) == group_size
