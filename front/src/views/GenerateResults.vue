@@ -40,9 +40,47 @@
         </ul>
       </div>
 
-      <button @click="handleGenerateGroups" class="generate-btn" :disabled="isLoading || !students.length">
-        Generate Groups
+      <button @click="handleGenerateGroups" class="generate-btn" :disabled="isLoading || isGenerating || !students.length">
+        {{ isGenerating ? 'Generating Groups...' : 'Generate Groups' }}
       </button>
+
+      <!-- Results Display -->
+      <div v-if="generatedGroups && generatedGroups.length" class="results-section">
+        <h2>Generated Groups</h2>
+        <p class="satisfaction-score">Preference Satisfaction: {{ satisfactionScore }}%</p>
+        
+        <div class="groups-grid">
+          <div v-for="group in generatedGroups" :key="group.group_number" class="group-card">
+            <h3>Group {{ group.group_number }}</h3>
+            <ul class="group-members">
+              <li v-for="member in group.members" :key="member.id" class="member-item">
+                <span class="member-name">{{ member.full_name }}</span>
+                <span class="member-details">
+                  (Mean: {{ member.mean || 'N/A' }}{{ member.alt ? ', Alt' : '' }})
+                </span>
+              </li>
+            </ul>
+            <div class="group-stats">
+              <small>Avg: {{ group.average_mean?.toFixed(1) || 'N/A' }} | Alt: {{ group.alternant_count || 0 }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Publish Actions -->
+        <div class="results-actions">
+          <button 
+            @click="saveResults(true)" 
+            class="publish-btn"
+            :disabled="isSaving"
+          >
+            {{ isSaving ? 'Publishing...' : 'Publish Results' }}
+          </button>
+        </div>
+
+        <div v-if="saveMessage" class="save-message" :class="{ error: saveError }">
+          {{ saveMessage }}
+        </div>
+      </div>
     </div>
 
     <router-link to="/homeTeacher" class="back-link" v-if="!isLoading">Back to Dashboard</router-link>
@@ -59,7 +97,13 @@ export default {
       n: 4, // Default group size
       students: [],
       isLoading: true,
-      // activeFormConfig: null, // No longer needed
+      isGenerating: false,
+      generatedGroups: null,
+      satisfactionScore: 0,
+      isSaving: false,
+      saveMessage: '',
+      saveError: false,
+      currentUser: null,
     };
   },
   methods: {
@@ -70,7 +114,7 @@ export default {
       try {
         const { data, error } = await supabase
           .from('students')
-          .select('id, full_name, present'); // Ensure id, full_name, and present are selected
+          .select('id, full_name, mean, alt, present'); // Load all required fields for the algorithm
 
         if (error) throw error;
 
@@ -101,19 +145,214 @@ export default {
         alert('Failed to update student status. Ensure a boolean column named \'present\' exists in your \'students\' table.');
       }
     },
-    handleGenerateGroups() {
+
+    async loadStudentPreferences() {
+      try {
+        const { data, error } = await supabase
+          .from('preferences')
+          .select('student_id, preferred_id');
+
+        if (error) throw error;
+
+        // Convert array of preferences to object mapping student_id to array of preferred_ids
+        const preferences = {};
+        data.forEach(pref => {
+          if (!preferences[pref.student_id]) {
+            preferences[pref.student_id] = [];
+          }
+          preferences[pref.student_id].push(pref.preferred_id);
+        });
+
+        console.log('Preferences loaded:', preferences);
+        return preferences;
+      } catch (error) {
+        console.error('Error loading preferences:', error);
+        return {};
+      }
+    },
+    async runGroupingAlgorithm(includedStudents, preferences) {
+      try {
+        // Call the backend API to run the real PuLP algorithm
+        const response = await fetch('http://localhost:5000/api/generate-groups', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            students: includedStudents,
+            preferences: preferences,
+            n: this.n
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Backend API error');
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          return {
+            success: true,
+            groups: result.groups,
+            satisfactionScore: result.satisfaction_score
+          };
+        } else {
+          return { success: false, error: result.error };
+        }
+      } catch (error) {
+        console.error('Algorithm API error:', error);
+      }
+    },
+
+
+    async handleGenerateGroups() {
       const includedStudents = this.students.filter(student => student.present);
+      
       if (includedStudents.length === 0) {
         alert('No students are included for group generation.');
         return;
       }
+      
       if (includedStudents.length < this.n) {
         alert(`Not enough included students (${includedStudents.length}) to form groups of size ${this.n}.`);
         return;
       }
-      console.log(`Generating groups with n = ${this.n} for ${includedStudents.length} students:`, includedStudents);
-      alert('Group generation logic to be implemented! This will use the list of included students.');
-    }
+
+      this.isGenerating = true;
+      this.generatedGroups = null;
+
+      try {
+        // Load student preferences
+        const preferences = await this.loadStudentPreferences();
+        
+        // Run the algorithm
+        const result = await this.runGroupingAlgorithm(includedStudents, preferences);
+        
+        if (result.success) {
+          this.generatedGroups = result.groups;
+          this.satisfactionScore = result.satisfactionScore;
+          console.log('Groups generated successfully:', this.generatedGroups);
+        } else {
+          alert('Failed to generate groups: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error generating groups:', error);
+        alert('An error occurred while generating groups.');
+      } finally {
+        this.isGenerating = false;
+      }
+    },
+
+    async saveResults(publish = false) {
+      if (!this.generatedGroups || !this.generatedGroups.length) {
+        alert('No groups to save');
+        return;
+      }
+
+      this.isSaving = true;
+      this.saveMessage = '';
+      this.saveError = false;
+
+      try {
+        // Get current user (professor) information
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error('No authenticated user found');
+        }
+
+        // Get the active form configuration
+        const { data: formData, error: formError } = await supabase
+          .from('form')
+          .select('id')
+          .eq('isopen', true)
+          .order('id', { ascending: false })
+          .limit(1)
+          .single();
+
+        let formId = null;
+        if (!formError && formData) {
+          formId = formData.id;
+        }
+
+        // Prepare the results data
+        const resultsData = {
+          form_id: formId,
+          professor_id: user.id,
+          n_value: this.n,
+          generated_group_data: {
+            groups: this.generatedGroups,
+            satisfaction_score: this.satisfactionScore,
+            generation_timestamp: new Date().toISOString(),
+            total_students: this.generatedGroups.reduce((sum, group) => sum + group.members.length, 0)
+          },
+          is_published: publish
+        };
+
+        // Save to results table
+        const { data: savedResult, error: resultError } = await supabase
+          .from('results')
+          .insert(resultsData)
+          .select()
+          .single();
+
+        if (resultError) throw resultError;
+
+        // Create groups and group_members records
+        await this.createGroupRecords(savedResult.id, user.id);
+
+        this.saveMessage = 'Results published successfully! Students can now view their groups.';
+        this.saveError = false;
+
+        // Redirect to results page after successful publish
+        setTimeout(() => {
+          this.$router.push('/results');
+        }, 2000);
+
+      } catch (error) {
+        console.error('Error saving results:', error);
+        this.saveMessage = `Error saving results: ${error.message}`;
+        this.saveError = true;
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
+    async createGroupRecords(resultId, professorId) {
+      try {
+        // Create group records
+        for (const group of this.generatedGroups) {
+          // Create group record
+          const { data: groupRecord, error: groupError } = await supabase
+            .from('groups')
+            .insert({
+              professor_id: professorId,
+              is_published: true
+            })
+            .select()
+            .single();
+
+          if (groupError) throw groupError;
+
+          // Create group_members records
+          const memberInserts = group.members.map(member => ({
+            group_id: groupRecord.id,
+            student_id: member.id
+          }));
+
+          const { error: membersError } = await supabase
+            .from('group_members')
+            .insert(memberInserts);
+
+          if (membersError) throw membersError;
+        }
+      } catch (error) {
+        console.error('Error creating group records:', error);
+        throw error;
+      }
+    },
   },
   async mounted() {
     // await this.loadActiveFormConfig(); // Removed this call
@@ -299,5 +538,139 @@ export default {
 
 .back-link:hover {
   text-decoration: underline;
+}
+
+/* Results Section */
+.results-section {
+  width: 100%;
+  margin-top: 30px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.results-section h2 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.satisfaction-score {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #42b983;
+  margin-bottom: 20px;
+}
+
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.group-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #fafafa;
+}
+
+.group-card h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.1rem;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.group-members {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px 0;
+}
+
+.member-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.member-details {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: 8px;
+}
+
+.group-stats {
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.group-stats small {
+  color: #777;
+  font-size: 0.8rem;
+}
+
+/* Results Actions */
+.results-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.publish-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  background-color: #28a745;
+  color: white;
+}
+
+.publish-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.publish-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.save-message {
+  text-align: center;
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.save-message:not(.error) {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.save-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 </style> 

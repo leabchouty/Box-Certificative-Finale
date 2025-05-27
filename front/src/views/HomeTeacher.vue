@@ -21,7 +21,7 @@
         <p>Create and manage student information forms for group formation</p>
       </div>
       
-      <div class="option-card" @click="navigateToResults">
+      <div class="option-card" @click="navigateToGenerateResults">
         <div class="option-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
@@ -29,6 +29,19 @@
         </div>
         <h3>Generate Results</h3>
         <p>Generate optimal student groups based on collected data and preferences</p>
+      </div>
+
+      <div class="option-card" @click="navigateToResults">
+        <div class="option-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <h3>View Results</h3>
+        <p>View and manage published group results</p>
       </div>
     </div>
   </div>
@@ -45,9 +58,13 @@ export default {
       // Navigate to the form configuration page
       this.$router.push('/form-config');
     },
-    navigateToResults() {
-      // Navigate to the results page
+    navigateToGenerateResults() {
+      // Navigate to the generate results page
       this.$router.push('/generate-results');
+    },
+    navigateToResults() {
+      // Navigate to the view results page
+      this.$router.push('/results');
     },
     async logout() {
       try {
