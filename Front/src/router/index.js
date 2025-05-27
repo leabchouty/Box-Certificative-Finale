@@ -5,6 +5,7 @@ import HomeTeacher from '../views/HomeTeacher.vue';
 import FormView from '../views/Form.vue';
 import FormConfig from '../views/FormConfig.vue';
 import ResultsView from '../views/Results.vue';
+import ResultsStudentsView from '../views/ResultsStudents.vue';
 
 const routes = [
   {
@@ -40,6 +41,11 @@ const routes = [
     path: '/results',
     name: 'Results',
     component: ResultsView,
+  },
+  {
+    path:'/resultsstudents',
+    name: 'ResultsStudents',
+    component: ResultsStudentsView,
   }
 ];
 

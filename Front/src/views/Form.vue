@@ -1,7 +1,7 @@
 <template>
   <div class="form-wrapper">
     <div class="form-box">
-      <h1>Add Preferences</h1>
+      <h1>Preferences</h1>
       <form @submit.prevent="submitForm">
         <div v-for="(field, index) in fields" :key="index" class="form-row">
           <select v-model="field.name" :disabled="isFormLocked" required>

@@ -5,7 +5,7 @@
       <p class="welcome-text">Veuillez choisir une action :</p>
       <div class="menu-buttons">
         <router-link to="/form" class="menu-button">Form</router-link>
-        <router-link to="/results" class="menu-button">Results</router-link>
+        <router-link to="/resultsstudents" class="menu-button">Results</router-link>
       </div>
     </div>
   </div>
