@@ -85,14 +85,6 @@
           <h3>Current Form Statistics</h3>
           <div class="stats-grid">
             <div class="stat-item">
-              <span class="stat-label">Created:</span>
-              <span class="stat-value">{{ formatDateTime(existingConfig.created_at) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Last Updated:</span>
-              <span class="stat-value">{{ formatDateTime(existingConfig.updated_at) }}</span>
-            </div>
-            <div class="stat-item">
               <span class="stat-label">Student Responses:</span>
               <span class="stat-value">{{ studentResponseCount || 0 }}</span>
             </div>
@@ -185,9 +177,9 @@ export default {
       try {
         // Get the most recent form configuration
         const { data: configs, error: configError } = await supabase
-          .from('form_configurations')
+          .from('form')
           .select('*')
-          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
           .limit(1);
 
         if (configError) throw configError;
@@ -195,11 +187,11 @@ export default {
         if (configs && configs.length > 0) {
           this.existingConfig = configs[0];
           this.formConfig = {
-            m: this.existingConfig.num_preferences,
-            n: this.existingConfig.group_size,
-            closureDateTime: this.existingConfig.closure_datetime ? 
-              new Date(this.existingConfig.closure_datetime).toISOString().slice(0, 16) : '',
-            isPublished: this.existingConfig.is_published,
+            m: this.existingConfig.m,
+            n: this.existingConfig.n,
+            closureDateTime: this.existingConfig.date ? 
+              new Date(this.existingConfig.date).toISOString().slice(0, 16) : '',
+            isPublished: this.existingConfig.isopen,
           };
           
           // Store original config for change detection
@@ -223,8 +215,8 @@ export default {
       try {
         // Assuming you have a student_responses table
         const { count, error } = await supabase
-          .from('student_responses')
-          .select('id', { count: 'exact' })
+          .from('student')
+          .select('id', { count: 'form_submitted' })
           .eq('form_config_id', this.existingConfig.id);
 
         if (error) throw error;
@@ -264,27 +256,25 @@ export default {
 
       try {
         const configData = {
-          num_preferences: this.formConfig.m,
-          group_size: this.formConfig.n,
-          closure_datetime: this.formConfig.closureDateTime || null,
-          is_published: this.formConfig.isPublished,
-          updated_at: new Date().toISOString(),
+          m: this.formConfig.m,
+          n: this.formConfig.n,
+          date: this.formConfig.closureDateTime || null,
+          isopen: this.formConfig.isPublished,
         };
 
         let result;
         if (this.existingConfig) {
           // Update existing configuration
           result = await supabase
-            .from('form_configurations')
+            .from('form')
             .update(configData)
             .eq('id', this.existingConfig.id)
             .select()
             .single();
         } else {
           // Create new configuration
-          configData.created_at = new Date().toISOString();
           result = await supabase
-            .from('form_configurations')
+            .from('form')
             .insert([configData])
             .select()
             .single();
