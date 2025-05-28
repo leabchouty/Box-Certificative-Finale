@@ -41,8 +41,7 @@ Puis lancez l’application en exécutant : npm run dev
 Ouvrez un second terminal .
 
 Accédez au dossier back : cd back
-Installez les dépendances Python avec : pip install [si nécessaire, insérer un module spécifique]
-pip install -r requirements.txt
+Installez les dépendances Python avec : pip install -r requirements.txt
 Lancez ensuite le serveur avec : py run.py
 
 ### 3. Présentation des rôles utilisateurs
