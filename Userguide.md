@@ -50,6 +50,10 @@ Dans la page formulaire, l’étudiant voit une liste d’étudiants parmi lesqu
 
 Après connexion, les enseignants ont accès à plusieurs pages : une page de gestion des formulaires qui comprend un champ pour définir une date limite, un compteur affichant le nombre d’étudiants ayant répondu, un bouton pour fermer la session, ainsi qu’une case à cocher pour publier le formulaire ; une autre page permet de générer les résultats en précisant le nombre d’étudiants par groupe (paramètre n) ; enfin, une dernière page offre la possibilité de visualiser tous les groupes formés.
 
+### 4. Utilisation de l’application
+
+![Page d'authentification](Login.png)
+
 
 
 

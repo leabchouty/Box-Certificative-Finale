@@ -1,17 +1,17 @@
 <template>
   <div class="login-wrapper">
     <div class="login-box">
-      <h1>Se connecter à l'application</h1>
+      <h1>Log in </h1>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="username">Email</label>
-          <input type="text" id="username" v-model="username" placeholder="Entrez votre email" />
+          <input type="text" id="username" v-model="username" placeholder="Enter your email" />
         </div>
         <div class="form-group">
-          <label for="password">Mot de passe</label>
-          <input type="password" id="password" v-model="password" placeholder="Entrez votre mot de passe" />
+          <label for="password">Password</label>
+          <input type="password" id="password" v-model="password" placeholder="Enter your password" />
         </div>
-        <button type="submit" :disabled="isLoggingIn">Connexion</button>
+        <button type="submit" :disabled="isLoggingIn">Login</button>
         <p v-if="loginSuccessMessage" class="success-message">{{ loginSuccessMessage }}</p>
         <p v-if="loginErrorMessage" class="error-message">{{ loginErrorMessage }}</p>
       </form>
