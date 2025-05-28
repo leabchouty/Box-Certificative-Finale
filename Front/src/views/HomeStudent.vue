@@ -1,5 +1,6 @@
 <template>
   <div class="home-wrapper">
+    <button @click="logout" class="logout-btn">Logout</button>
     <div class="home-box">
       <h1>Bienvenue</h1>
       <p class="welcome-text">Veuillez choisir une action :</p>
@@ -12,8 +13,28 @@
 </template>
 
 <script>
+import { supabase } from '../supabase'; // Assure-toi que ce chemin est correct
+import { useRouter } from 'vue-router';
+
 export default {
   name: 'HomeView',
+  setup() {
+    const router = useRouter();
+
+    const logout = async () => {
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        router.push('/');
+      } catch (error) {
+        console.error('Error logging out:', error.message);
+      }
+    };
+
+    return {
+      logout
+    };
+  }
 };
 </script>
 
@@ -25,6 +46,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; /* pour positionner le bouton logout */
 }
 
 .home-box {
@@ -68,5 +90,27 @@ h1 {
 
 .menu-button:hover {
   background-color: #369f77;
+}
+
+.logout-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.logout-btn:hover {
+  background: #dc3545;
+  color: white;
+  transform: translateY(-2px);
 }
 </style>

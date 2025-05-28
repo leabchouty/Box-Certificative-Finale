@@ -1,10 +1,19 @@
 <template>
   <div class="form-wrapper">
     <div class="form-box">
-      <h1>Preferences</h1>
+      <h1>Assign Points</h1>
       <form @submit.prevent="submitForm">
-        <div v-for="(field, index) in fields" :key="index" class="form-row">
-          <select v-model="field.name" :disabled="isFormLocked" required>
+        <div
+          v-for="(field, index) in fields"
+          :key="index"
+          class="form-row"
+        >
+          <select
+            v-model="field.name"
+            :disabled="isFormLocked"
+            required
+            @input="handleFieldInput(index)"
+          >
             <option value="" disabled>Select a classmate</option>
             <option
               v-for="option in getAvailableOptions(index)"
@@ -14,11 +23,32 @@
               {{ option }}
             </option>
           </select>
+
+          <input
+            type="number"
+            v-model.number="field.points"
+            :disabled="isFormLocked"
+            min="0"
+            :max="getMaxPoints(index)"
+            placeholder="Points"
+            @input="handleFieldInput(index)"
+          />
         </div>
 
-        
+        <p class="total-warning" v-if="totalPoints > 100">
+          ⚠️ Total exceeds 100 points ({{ totalPoints }})!
+        </p>
 
-        <button type="submit" :disabled="isFormLocked">Submit</button>
+        <p class="total-display">
+          Total: {{ totalPoints }} / 100
+        </p>
+
+        <button
+          type="submit"
+          :disabled="isFormLocked || totalPoints !== 100"
+        >
+          Submit
+        </button>
         <button type="button" @click="goBack" class="back-button">Back</button>
 
         <p v-if="isFormLocked" style="margin-top: 15px; color: #888;">
@@ -36,101 +66,122 @@ export default {
   name: 'FormView',
   data() {
     return {
-      fields: [],
+      fields: [{ name: '', points: 0 }],
       options: [],
       currentUserId: null,
       classmates: [],
-      isFormLocked: false, // <- control form access based on deadline
+      isFormLocked: false,
     };
   },
   async mounted() {
     await this.fetchCurrentUserId();
     await this.fetchClassmateNames();
-    await this.fetchMAndSetFieldsAndCheckDate();
+    await this.checkDeadline();
+  },
+  computed: {
+    totalPoints() {
+      return this.fields.reduce((sum, field) => sum + (field.points || 0), 0);
+    },
   },
   methods: {
     async fetchCurrentUserId() {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData?.user) {
-        console.error('Failed to get current user:', userError?.message || 'No user found');
+      const { data: userData, error } = await supabase.auth.getUser();
+      if (error || !userData?.user) {
+        console.error('User not found:', error?.message || 'Not logged in');
         return;
       }
       this.currentUserId = userData.user.id;
     },
 
     async fetchClassmateNames() {
-      const { data, error } = await supabase
-        .from('students')
-        .select('id, full_name');
-
+      const { data, error } = await supabase.from('students').select('id, full_name');
       if (error) {
         console.error('Error fetching classmates:', error.message);
         return;
       }
-
-      this.classmates = data.filter(student => student.id !== this.currentUserId);
+      this.classmates = data.filter(s => s.id !== this.currentUserId);
       this.options = this.classmates.map(s => s.full_name);
     },
 
-    async fetchMAndSetFieldsAndCheckDate() {
-      const { data, error } = await supabase
-        .from('form')
-        .select('m, date')
-        .single();
-
+    async checkDeadline() {
+      const { data, error } = await supabase.from('form').select('date').single();
       if (error || !data) {
-        console.error('Error fetching m/date from form table:', error?.message || 'No form config found');
+        console.error('Error fetching deadline:', error?.message || 'No config found');
         return;
       }
 
-      const m = data.m;
       const deadline = new Date(data.date);
       const now = new Date();
-
       this.isFormLocked = now > deadline;
-
-      this.fields = Array.from({ length: m }, () => ({ name: '' }));
     },
 
     getAvailableOptions(currentIndex) {
-      const selected = this.fields.map(f => f.name).filter((name, i) => name && i !== currentIndex);
+      const selected = this.fields
+        .map((f, i) => f.name)
+        .filter((name, i) => name && i !== currentIndex);
       return this.options.filter(name => !selected.includes(name));
     },
 
+    getMaxPoints(index) {
+      const totalExcludingCurrent = this.fields.reduce((sum, f, i) => {
+        return i !== index ? sum + (f.points || 0) : sum;
+      }, 0);
+      return Math.max(0, 100 - totalExcludingCurrent);
+    },
+
+    handleFieldInput(index) {
+      const field = this.fields[index];
+
+      // Only allow numbers
+      if (typeof field.points !== 'number' || isNaN(field.points)) {
+        field.points = 0;
+        return;
+      }
+
+      // Clamp to max allowed
+      const max = this.getMaxPoints(index);
+      if (field.points > max) {
+        field.points = max;
+      }
+
+      // Clean up if total hits 100
+      if (this.totalPoints === 100) {
+        this.fields = this.fields.filter(f => f.name && f.points > 0);
+        return;
+      }
+
+      const isValid = field.name && field.points > 0;
+      const isLast = index === this.fields.length - 1;
+
+      if (isValid && isLast && this.totalPoints < 100) {
+        this.fields.push({ name: '', points: 0 });
+      }
+    },
+
     async submitForm() {
-      if (this.isFormLocked) return; // extra safety
+      if (this.isFormLocked || this.totalPoints !== 100) return;
 
-      const selectedNames = this.fields.map(f => f.name);
+      const submissions = this.fields
+        .filter(f => f.name && f.points > 0)
+        .map(f => {
+          const student = this.classmates.find(s => s.full_name === f.name);
+          return {
+            student_id: this.currentUserId,
+            preferred_id: student?.id,
+            points: f.points,
+          };
+        });
 
-      const preferredIds = selectedNames.map(name => {
-        const student = this.classmates.find(s => s.full_name === name);
-        return student ? student.id : null;
-      }).filter(id => id !== null);
-
-      const { error: deleteError } = await supabase
+      await supabase
         .from('preferences')
         .delete()
         .eq('student_id', this.currentUserId);
 
-      if (deleteError) {
-        console.error('❌ Failed to delete existing preferences:', deleteError.message);
-        return;
-      }
-
-      const inserts = preferredIds.map(preferred_id => ({
-        student_id: this.currentUserId,
-        preferred_id,
-      }));
-
-      const { error: insertError } = await supabase
-        .from('preferences')
-        .insert(inserts);
-
+      const { error: insertError } = await supabase.from('preferences').insert(submissions);
       if (insertError) {
-        console.error('❌ Failed to insert preferences:', insertError.message);
+        console.error('Error inserting preferences:', insertError.message);
       } else {
-        console.log('✅ Preferences updated:', inserts);
-        alert('Preferences submitted successfully!');
+        alert('Points submitted successfully!');
         this.$router.push({ name: 'HomeStudent' });
       }
     },
@@ -143,7 +194,6 @@ export default {
 </script>
 
 <style scoped>
-/* same as before */
 .form-wrapper {
   height: 100vh;
   width: 100vw;
@@ -176,7 +226,8 @@ h1 {
   margin-bottom: 20px;
 }
 
-select {
+select,
+input[type='number'] {
   flex: 1;
   padding: 14px;
   font-size: 16px;
@@ -192,27 +243,30 @@ button {
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
+  margin-top: 10px;
 }
 
 button:hover {
   background-color: #369f77;
 }
 
-.checkbox-row {
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: center;
-  font-size: 16px;
-}
-
 .back-button {
-  margin-top: 20px;
   background-color: #999;
+  margin-left: 10px;
 }
 
 .back-button:hover {
   background-color: #777;
+}
+
+.total-warning {
+  color: red;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.total-display {
+  margin-top: 10px;
+  font-weight: bold;
 }
 </style>
