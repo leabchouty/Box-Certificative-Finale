@@ -2,8 +2,8 @@
   <div class="home-wrapper">
     <button @click="logout" class="logout-btn">Logout</button>
     <div class="home-box">
-      <h1>Bienvenue</h1>
-      <p class="welcome-text">Veuillez choisir une action :</p>
+      <h1>Welcome</h1>
+      <p class="welcome-text">Please choose an action :</p>
       <div class="menu-buttons">
         <router-link to="/form" class="menu-button">Form</router-link>
         <router-link to="/results" class="menu-button">View My Group</router-link>

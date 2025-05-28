@@ -4,8 +4,12 @@
 2. Installation de l’application
 3. Présentation des rôles utilisateurs
 4. Utilisation de l’application
-5. Foire aux questions (FAQ) / Dépannage
+5. Conclusion
+
 ### 1. Introduction 
+
+Ce guide d’utilisation a pour objectif de vous accompagner dans la prise en main de notre application de gestion de préférences et de formation de groupes étudiants. Il détaille les étapes nécessaires à l’installation, explique les rôles utilisateurs (enseignant et étudiant), et décrit le fonctionnement des principales fonctionnalités de l’interface. Que vous soyez développeur, enseignant ou étudiant, ce document vous aidera à naviguer efficacement dans l'application.
+
 ### 2. Installation de l’application
 
 #### 2.1 Configuration préalable
@@ -20,7 +24,7 @@ Nous utilisons Supabase comme service de base de données.
 
 Une fois la base de données configurée, vous pouvez installer l’application en suivant ces étapes :
 
-Téléchargez l’application depuis ce lien : [lien à insérer].
+Téléchargez l’application depuis ce lien : [https://github.com/leabchouty/Box-Certificative-Finale].
 
 Décompressez l’archive puis ouvrez le dossier dans Visual Studio Code (VS Code).
 
@@ -52,7 +56,42 @@ Après connexion, les enseignants ont accès à plusieurs pages : une page de ge
 
 ### 4. Utilisation de l’application
 
-![Page d'authentification](Login.png)
+![Page d'authentification](./Img/Login.png)
+Dans cette image, on voit une page de connexion où l'utilisateur peut se connecter en utilisant son adresse e-mail et son mot de passe.
+
+- Interfaces pour le compte étudiant :
+
+![Page d'acceuil](./Img/HomeStudent.png)
+Cette image représente la page d'accueil du compte étudiant. Elle comporte un menu avec deux boutons : l'un pour accéder au formulaire et l'autre pour consulter les résultats.
+
+![Formulaire permettant à l'étudiant de saisir ses informations ainsi que ses préférences.](./Img/FormStudent.png)
+
+![Page des résultats ](./Img/Results.png)
+
+- Interfaces pour le compte enseignant 
+
+![page d'acceuil pour l'enseignant](./Img/HomeTeacher.png)
+Cette image présente la page d'accueil de l'enseignant. Elle comporte trois boutons : l'un pour créer le formulaire destiné aux étudiants, un autre pour générer les résultats, et un dernier pour consulter les résultats. 
+
+![Page pour créer le formulaire des étudiants](./Img/FormTeacher)
+Cette image illustre l’interface de configuration utilisée par l’enseignant. Elle lui permet de créer le formulaire, de saisir ou modifier la date limite, de consulter le nombre d’étudiants ayant validé le formulaire, de publier ce dernier, ainsi que de clôturer la session.
+
+![Interface pour executer l'algorithme](./Img/GenerateStudent)
+Cette image met en évidence la fonctionnalité principale : la création de groupes en fonction des préférences des étudiants. Elle inclut un champ permettant de définir le nombre d’étudiants par groupe, la possibilité de cocher ou décocher les étudiants (pour exclure les absents), ainsi qu’un bouton pour générer les groupes.
+
+![Page des résultats ](./Img/ResultsTeacher1.png)
+![Page des résultats](./Img/ResultsTeacher2.png)
+
+### 5. Conclusion
+Ce guide vous a présenté les étapes essentielles pour utiliser l'application de manière simple et efficace. Que vous soyez enseignant ou étudiant, l’objectif est de vous offrir un outil pratique pour gérer les préférences et former des groupes de façon claire et rapide. 
+
+
+
+
+
+
+
+
 
 
 
