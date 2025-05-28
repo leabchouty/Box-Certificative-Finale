@@ -2,7 +2,7 @@ from pulp import LpProblem, LpVariable, lpSum, LpMaximize, LpBinary, value
 import logging
 
 
-def run_grouping_algorithm(students_data, preferences_data, n):
+def clustering_algorithm(students_data, preferences_data, n):
     """
     Run the group formation algorithm using real student data from the database.
 
