@@ -150,24 +150,22 @@ export default {
       try {
         const { data, error } = await supabase
           .from('preferences')
-          .select('student_id, preferred_id');
+          .select('student_id, preferred_id, points');
 
         if (error) throw error;
 
-        // Convert array of preferences to object mapping student_id to array of preferred_ids
-        const preferences = {};
-        data.forEach(pref => {
-          if (!preferences[pref.student_id]) {
-            preferences[pref.student_id] = [];
-          }
-          preferences[pref.student_id].push(pref.preferred_id);
-        });
+        // Convert array of preferences to array of objects with points
+        const preferences = data.map(pref => ({
+          student_id: pref.student_id,
+          preferred_id: pref.preferred_id,
+          points: pref.points || 0
+        }));
 
         console.log('Preferences loaded:', preferences);
         return preferences;
       } catch (error) {
         console.error('Error loading preferences:', error);
-        return {};
+        return [];
       }
     },
     async runGroupingAlgorithm(includedStudents, preferences) {

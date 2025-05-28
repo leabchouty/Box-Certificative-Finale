@@ -12,20 +12,6 @@
 
       <!-- Form configuration -->
       <form v-else @submit.prevent="handleSaveChanges" class="config-form">
-        <div class="form-group">
-          <label for="numPreferences">Number of Preferences (m):</label>
-          <input 
-            type="number" 
-            id="numPreferences" 
-            v-model.number="formConfig.m" 
-            min="1" 
-            max="10"
-            required
-            :disabled="isSaving"
-          >
-          <small>How many preferences can each student select? (1-10)</small>
-        </div>
-
         <div class="form-group publish-toggle-group">
           <label for="isPublishedCheckbox">Form Status:</label>
           <div class="toggle-container">
@@ -128,7 +114,6 @@ export default {
   data() {
     return {
       formConfig: {
-        m: 3,
         closureDateTime: '',
         isPublished: false,
       },
@@ -150,7 +135,6 @@ export default {
       if (!this.originalConfig) return true; // New config
       
       return (
-        this.formConfig.m !== this.originalConfig.m ||
         this.formConfig.closureDateTime !== this.originalConfig.closureDateTime ||
         this.formConfig.isPublished !== this.originalConfig.isPublished
       );
@@ -171,7 +155,6 @@ export default {
         if (configs && configs.length > 0) {
           this.existingConfig = configs[0];
           this.formConfig = {
-            m: this.existingConfig.m,
             closureDateTime: this.existingConfig.date ? 
               new Date(this.existingConfig.date).toISOString().slice(0, 16) : '',
             isPublished: this.existingConfig.isopen,
@@ -179,7 +162,6 @@ export default {
           
           // Store original config for change detection
           this.originalConfig = { 
-            m: this.formConfig.m,
             closureDateTime: this.formConfig.closureDateTime,
             isPublished: this.formConfig.isPublished
           };
@@ -251,7 +233,6 @@ export default {
 
       try {
         const configData = {
-          m: this.formConfig.m,
           date: this.formConfig.closureDateTime || null,
           isopen: this.formConfig.isPublished,
         };
@@ -312,9 +293,7 @@ export default {
 
     hasSignificantChanges() {
       if (!this.originalConfig) return false;
-      return (
-        this.formConfig.m !== this.originalConfig.m
-      );
+      return false; // No significant changes since m was removed
     },
 
     getFormStatus() {
@@ -465,7 +444,6 @@ export default {
   font-size: 0.95rem;
 }
 
-.config-form input[type="number"],
 .config-form input[type="datetime-local"] {
   width: 100%;
   padding: 12px 15px;
