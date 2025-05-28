@@ -1,6 +1,6 @@
 <template>
   <div class="form-wrapper">
-    <div class="form-box">
+    <div class="form-box" v-if="isOpen && !isFormLocked">
       <h1>Assign Points</h1>
       <form @submit.prevent="submitForm">
         <div
@@ -50,11 +50,15 @@
           Submit
         </button>
         <button type="button" @click="goBack" class="back-button">Back</button>
-
-        <p v-if="isFormLocked" style="margin-top: 15px; color: #888;">
-          Submissions are closed — the deadline has passed.
-        </p>
       </form>
+    </div>
+
+    <!-- Message quand formulaire fermé -->
+    <div class="form-box" v-else>
+      <p style="color: #888; font-size: 18px; text-align: center;">
+        Submissions are closed — either the deadline has passed or the form is not open.
+      </p>
+      <button type="button" @click="goBack" class="back-button">Back</button>
     </div>
   </div>
 </template>
@@ -71,6 +75,7 @@ export default {
       currentUserId: null,
       classmates: [],
       isFormLocked: false,
+      isOpen: true,
     };
   },
   async mounted() {
@@ -104,15 +109,20 @@ export default {
     },
 
     async checkDeadline() {
-      const { data, error } = await supabase.from('form').select('date').single();
+      const { data, error } = await supabase.from('form').select('date, isopen').single();
+
       if (error || !data) {
-        console.error('Error fetching deadline:', error?.message || 'No config found');
+        console.error('Error fetching form config:', error?.message || 'No config found');
+        this.isFormLocked = true;
+        this.isOpen = false;
         return;
       }
 
       const deadline = new Date(data.date);
       const now = new Date();
+
       this.isFormLocked = now > deadline;
+      this.isOpen = data.isopen && !this.isFormLocked;
     },
 
     getAvailableOptions(currentIndex) {
@@ -132,19 +142,16 @@ export default {
     handleFieldInput(index) {
       const field = this.fields[index];
 
-      // Only allow numbers
       if (typeof field.points !== 'number' || isNaN(field.points)) {
         field.points = 0;
         return;
       }
 
-      // Clamp to max allowed
       const max = this.getMaxPoints(index);
       if (field.points > max) {
         field.points = max;
       }
 
-      // Clean up if total hits 100
       if (this.totalPoints === 100) {
         this.fields = this.fields.filter(f => f.name && f.points > 0);
         return;
