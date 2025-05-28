@@ -14,15 +14,12 @@ Ce guide d’utilisation a pour objectif de vous accompagner dans la prise en ma
 
 #### 2.1 Configuration préalable
 
-Avant d’installer l’application, il est nécessaire de configurer la base de données.
-Nous utilisons Supabase comme service de base de données.
- Voici les étapes à suivre :
-1. Créer un compte Supabase, si ce n’est pas déjà fait.
-2. Créer un nouveau projet Supabase.
-4. Importer le fichier bdd.sql pour initialiser la structure de la base de données.
-6. Insérer les données des étudiants et des enseignants, car nous considérons qu’ils sont déjà inscrits dans le système.
+Avant d’installer l’application, veuillez vérifier la base de données. Voici le lien pour y accéder, ainsi que l’adresse e-mail et le mot de passe nécessaires à la connexion. Vous pouvez modifier, ajouter ou supprimer des tables et des données selon vos besoins.
+Lien : https://supabase.com/dashboard/sign-in?returnTo=%2Fsign-in
+Email : teammateclustering@gmail.com
+Mot de passe : XkABPx!4G*-5DGD
 
-Une fois la base de données configurée, vous pouvez installer l’application en suivant ces étapes :
+Une fois la base de données verifiée, vous pouvez installer l’application en suivant ces étapes :
 
 Téléchargez l’application depuis ce lien : [https://github.com/leabchouty/Box-Certificative-Finale].
 
